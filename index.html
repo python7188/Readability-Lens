@@ -403,7 +403,7 @@ function render(r,text){
  const ease=r.ease;let nE=0,nM=0,nD=0;
  r.prose.forEach(o=>{const t=TIER(o.score);if(t>=2)nD++;else if(t===1)nM++;else nE++});
  $('verdict').textContent=verdict(r,nD);$('eband').textContent=band(ease)[0];
- const tgt=clamp(ease),t0=performance.now();
+ const tgt=ease,t0=performance.now();
  if(rm())$('ease').textContent=tgt.toFixed(1);else(function f(t){const p=Math.min(1,(t-t0)/900);$('ease').textContent=(tgt*(1-Math.pow(1-p,3))).toFixed(1);if(p<1)requestAnimationFrame(f)})(t0);
  $('grade').textContent=Math.max(1,r.fk).toFixed(1);$('words').textContent=r.W.toLocaleString();$('sents').textContent=r.S.toLocaleString();
  const tot=r.S,seg=[['Easy',nE,'var(--b0)'],['Moderate',nM,'var(--b1)'],['Difficult',nD,'var(--b3)']];
