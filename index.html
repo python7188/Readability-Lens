@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Readability Lens</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F6F4EF;--paper:#FFFFFF;--ink:#17171C;--muted:#6A6A75;--line:#E2DFD6;--accent:#4338CA;--accent-ink:#fff;
+--t1:#FBE8B8;--t2:#F8C99D;--t3:#F2A79C;--b0:#D3D3DC;--b1:#E6B04A;--b2:#E07B39;--b3:#C8402D;
+--serif:"Newsreader",Georgia,serif;--sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121216;--paper:#1A1A20;--ink:#ECECF1;--muted:#9A9AA8;--line:#2C2C35;--accent:#8E96FF;--accent-ink:#0F1030;--t1:#5A4614;--t2:#6E3F17;--t3:#7A2B26;--b0:#3A3A46;--b1:#D9A441;--b2:#E58A4B;--b3:#E9604A}}
+:root[data-theme="dark"]{--bg:#121216;--paper:#1A1A20;--ink:#ECECF1;--muted:#9A9AA8;--line:#2C2C35;--accent:#8E96FF;--accent-ink:#0F1030;--t1:#5A4614;--t2:#6E3F17;--t3:#7A2B26;--b0:#3A3A46;--b1:#D9A441;--b2:#E58A4B;--b3:#E9604A}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+.hidden{display:none!important}
+button{font:500 .9rem var(--sans);padding:11px 22px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+button.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button:focus-visible,textarea:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.hdr{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:16px 32px}
+.word{display:flex;align-items:center;gap:10px;font:600 1rem var(--sans)}
+.hdr small{color:var(--muted);font-size:.82rem}
+/* landing */
+.land{min-height:100%;display:flex;flex-direction:column}
+.hero{width:100%;max-width:800px;margin:0 auto;padding:5vh 24px 48px}
+h1{font:400 clamp(2.5rem,6.5vw,4.3rem)/1.05 var(--serif);letter-spacing:-.02em;margin:0 0 18px;max-width:14ch}
+.lede{font-size:1.1rem;color:var(--muted);max-width:44ch;margin:0 0 28px}
+.box{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:0 1px 0 rgba(0,0,0,.03)}
+textarea{display:block;width:100%;min-height:300px;border:0;resize:vertical;background:transparent;color:var(--ink);font:1.1rem/1.75 var(--serif);padding:22px 24px 44px;border-radius:16px}
+.cnt{position:absolute;right:18px;bottom:12px;font-size:.8rem;color:var(--muted)}
+.acts{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px;align-items:center}
+#err{color:#B4321F;font-size:.88rem;font-weight:500}
+.pv{margin-top:44px}.pvh{font-size:.8rem;color:var(--muted);font-weight:500;margin:0 0 10px}
+.fine{margin:26px 0 0;color:var(--muted);font-size:.84rem;text-align:center}
+.flow{display:flex;justify-content:center;gap:10px;margin-top:10px;color:var(--muted);font-size:.8rem}.flow b{color:var(--ink);font-weight:500}
+/* results */
+.res{height:100%;display:flex;flex-direction:column}
+.sum{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.4fr);gap:14px;padding:4px 32px 16px}
+.tile{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px 20px;min-width:0}
+.eb{font-size:.78rem;color:var(--muted);font-weight:500;margin:0 0 6px}
+.verdict{font:500 1.5rem/1.2 var(--serif);margin:0 0 12px}
+.big{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}.big b{font:500 3.4rem/1 var(--serif);color:var(--accent)}.big span{color:var(--muted);font-size:.85rem}
+.meta{display:flex;gap:18px;margin-top:10px;font-size:.84rem;color:var(--muted)}.meta b{color:var(--ink);font-weight:600}
+.stack{display:flex;height:12px;border-radius:6px;overflow:hidden;gap:2px;margin:6px 0 12px}.stack i{display:block;min-width:2px}
+.dl{display:grid;gap:5px;font-size:.88rem}.dl div{display:grid;grid-template-columns:14px 1fr auto;gap:8px;align-items:center}.dl i{width:10px;height:10px;border-radius:3px}.dl b{font-weight:600}
+.fn{font-size:.72rem;color:var(--muted);margin:10px 0 0}
+.mapw{position:relative;margin-top:10px}.map{display:flex;align-items:flex-end;gap:1px;height:64px}
+.map i{flex:1;min-width:1px;border-radius:2px 2px 0 0;cursor:pointer;background:var(--b0)}.map i.k1{background:var(--b1)}.map i.k2{background:var(--b2)}.map i.k3{background:var(--b3)}
+.mks{position:relative;height:26px;margin-top:6px}
+.axis{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted)}
+.mk::before{content:"";position:absolute;left:50%;top:-6px;width:1px;height:6px;background:var(--ink)}
+.tabs2{display:flex;gap:6px;margin:0 0 16px}.tabs2 button{border-radius:999px;padding:6px 16px;font-size:.84rem}.tabs2 button.on{background:var(--ink);color:var(--paper)}
+.tp{max-width:72ch;color:var(--muted);font-size:.9rem;margin:0 0 14px}.lg2{margin:0;padding-left:18px;font-size:.9rem}.lg2 li{margin:8px 0}
+.tbl input[type=number]{width:46px;font:inherit;padding:3px 4px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)}
+.tbl{width:100%;border-collapse:collapse;font-size:.86rem}.tbl th{text-align:left;font-size:.74rem;color:var(--muted);font-weight:600;padding:10px 12px;border-bottom:1px solid var(--line)}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}.tbl td.s{font-family:var(--serif);font-size:.95rem;min-width:260px}
+.tbl select{font:inherit;padding:3px 6px;border-radius:6px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.ok{color:#2F7D4F;font-weight:600}.off{color:#B4321F;font-weight:600}
+.tip{position:fixed;transform:translateX(-50%);background:var(--ink);color:var(--paper);font-size:.76rem;padding:4px 10px;border-radius:6px;pointer-events:none;z-index:20;white-space:nowrap}
+.mk{position:absolute;transform:translateX(-50%);width:22px;height:22px;padding:0;border-radius:50%;font-size:.72rem;font-weight:600;border:1px solid var(--ink);background:var(--paper)}
+.mk.on{background:var(--ink);color:var(--paper)}
+.split{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(380px,.85fr);gap:14px;padding:0 32px 20px}
+.reader,.panel{min-height:0;overflow:auto;border-radius:16px}
+.reader{background:var(--paper);border:1px solid var(--line)}
+.rbar{position:sticky;top:0;z-index:2;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 28px;background:var(--paper);border-bottom:1px solid var(--line);font-size:.8rem;color:var(--muted)}
+.rbar b{color:var(--ink);font-weight:600;margin-right:auto}
+.lg{display:inline-flex;align-items:center;gap:5px}.lg i{width:14px;height:14px;border-radius:3px}
+.rbar button{padding:4px 12px;font-size:.78rem;border-radius:999px}.rbar button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.doc{font:1.18rem/1.9 var(--serif);white-space:pre-wrap;max-width:68ch;margin:0 auto;padding:30px 28px 80px}
+mark{color:inherit;background:transparent;border-radius:3px;padding:2px 0;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+mark.t1{background:var(--t1)}mark.t2{background:var(--t2)}mark.t3{background:var(--t3)}
+.doc.only mark:not(.top){background:transparent}
+mark.top{cursor:pointer}mark.top::before{content:attr(data-n);font:600 .62rem var(--sans);vertical-align:super;margin-right:3px}
+mark.active{background:var(--t3);text-decoration:underline;text-decoration-color:var(--accent);text-decoration-thickness:3px;text-underline-offset:5px}
+.panel{padding:0}.ph{font:600 .8rem var(--sans);color:var(--muted);margin:2px 4px 12px}
+.item{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:12px;cursor:pointer;transition:box-shadow .15s}
+.item.open{box-shadow:0 0 0 2px var(--accent)}
+.ih{display:flex;align-items:baseline;gap:12px}.rk{font:500 1.5rem var(--serif);color:var(--muted)}.sc{font:500 1.5rem var(--serif)}
+.tier{font-size:.74rem;font-weight:600;padding:2px 10px;border-radius:999px;margin-left:auto}
+.tier.k0{background:var(--t1)}.tier.k1{background:var(--t1)}.tier.k2{background:var(--t2)}.tier.k3{background:var(--t3)}
+.ibar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:10px 0 0}.ibar b{display:block;height:100%;border-radius:3px}
+.quote{font:1.02rem/1.55 var(--serif);margin:8px 0 6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.item.open .quote{-webkit-line-clamp:unset;display:block}
+.facts{font-size:.8rem;color:var(--muted);margin:0 0 10px}
+.view{padding:6px 14px;font-size:.82rem;border-radius:8px}
+.detail{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);cursor:default}
+.detail h4{font:600 .78rem var(--sans);color:var(--muted);margin:0 0 10px}.detail h5{font:600 .78rem var(--sans);color:var(--muted);margin:18px 0 8px}
+.sr{display:grid;grid-template-columns:150px 1fr 48px;gap:10px;align-items:center;font-size:.84rem;margin:7px 0}
+.sr small{color:var(--muted);font-size:.72rem}.sr em{font-style:normal;font-weight:600;text-align:right}
+.bar{height:10px;background:var(--line);border-radius:5px;overflow:hidden}.bar b{display:block;height:100%;background:var(--accent);border-radius:5px}
+.sum2{display:flex;justify-content:space-between;font-size:.88rem;padding-top:8px;border-top:1px solid var(--line);margin-top:8px}.sum2 b{font:500 1.3rem var(--serif)}
+.nt{font-size:.74rem;color:var(--muted);margin:6px 0 0}
+.fg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.fg div{background:var(--bg);border-radius:10px;padding:8px 10px}.fg b{display:block;font:500 1.2rem var(--serif)}.fg span{font-size:.7rem;color:var(--muted)}
+.detail p{font-size:.9rem;margin:0}.detail ul{margin:0;padding-left:18px;font-size:.88rem}.detail li{margin:5px 0}
+.trust{font-size:.8rem;font-weight:600;margin:6px 4px 0;color:var(--ink)}
+.how{font-size:.8rem;color:var(--muted);margin:6px 4px 0}
+@media (max-width:1000px){
+ .res{height:auto;min-height:100%}.sum{grid-template-columns:1fr;padding:4px 16px 12px}
+ .split{display:flex;flex-direction:column;padding:0 16px 24px}.panel{order:1;overflow:visible}.reader{order:2;overflow:visible}
+ .hdr{padding:14px 16px}.hero{padding-top:3vh}.sr{grid-template-columns:110px 1fr 44px}.fg{grid-template-columns:repeat(2,1fr)}
+ .doc{padding:22px 18px 40px}.rbar{padding:10px 16px;position:static}}
+@media (prefers-reduced-motion:reduce){.item{transition:none}}
+</style>
+</head>
+<body>
+<section id="land" class="land">
+ <header class="hdr"><div class="word"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/><path d="M7.5 10h5" stroke="var(--b2)"/></svg>Readability Lens</div><small>Free, and it runs in your browser</small></header>
+ <main class="hero">
+  <h1>Make difficult writing easier to understand.</h1>
+  <p class="lede">Paste a chapter, article, or passage. We'll find the sentences that are likely to be hardest to read, and show you why.</p>
+  <div class="box"><textarea id="in" placeholder="Paste your chapter here..." spellcheck="false" aria-label="Chapter text"></textarea><span class="cnt" id="count">0 words</span></div>
+  <div class="acts"><button class="pri" id="run">Analyze Chapter</button><button id="ex">Try Example</button><span id="err" role="alert"></span></div>
+  <p class="fine">Runs locally in your browser. Your text is never uploaded.</p>
+  <p class="fine hidden" style="margin-top:8px"><a href="#" id="devtest" style="color:var(--muted)">Developer view: run the accuracy test</a></p>
+  <div class="flow"><b>Paste</b>&rarr;<b>Analyze</b>&rarr;<b>Understand</b>&rarr;<b>Fix</b></div>
+  <div class="pv" aria-hidden="true"><p class="pvh">What you'll see for each hard sentence</p>
+   <div class="item" style="cursor:default"><div class="ih"><span class="rk">01</span><span class="sc">72.3</span><span class="tier k3">Very high difficulty</span></div><div class="ibar"><b style="width:72%;background:var(--b3)"></b></div>
+   <p class="quote" style="display:block">“...wondering whether the incomprehensibly elaborate arrangement of obligations, half-remembered promises, and inherited grievances could be described as love...”</p>
+   <p class="facts">50 words · 5 est. clauses · 1.9 syllables/word</p>
+   <p style="margin:0;font-size:.86rem"><b>Why:</b> long, clause-heavy construction plus readability-formula scores. <b>Fix:</b> split it in two and cut the interrupting clause.</p></div></div>
+ </main>
+</section>
+
+<section id="res" class="res hidden">
+ <header class="hdr"><div class="word"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="M15 15l6 6"/><path d="M7.5 10h5" stroke="var(--b2)"/></svg>Readability Lens</div><button id="back">Analyze another chapter</button></header>
+ <section class="sum" aria-label="Chapter overview">
+  <div class="tile"><p class="eb">Your chapter</p><h2 class="verdict" id="verdict"></h2>
+   <div class="big"><b id="ease">0</b><span><strong style="color:var(--ink)">Flesch Reading Ease</strong><br><span id="eband"></span></span></div>
+   <div class="meta"><span>Estimated grade level <b id="grade"></b></span><span><b id="words"></b> words</span><span><b id="sents"></b> sentences</span></div></div>
+  <div class="tile"><p class="eb">Sentence difficulty</p><div class="stack" id="stack"></div><div class="dl" id="dl"></div><p class="fn">Counts use fixed score thresholds. The top 5 are ranked within your chapter.</p></div>
+  <div class="tile"><p class="eb">Where the difficulty falls in your chapter</p><div class="mapw"><div class="map" id="map"></div><div class="mks" id="mks"></div><div class="axis"><span>Start</span><span>End of chapter</span></div></div></div>
+ </section>
+ <div class="split">
+  <section class="reader" id="reader" aria-label="Your chapter">
+   <div class="rbar"><b>Your chapter</b><span class="lg"><i style="background:var(--t1)"></i>Moderate</span><span class="lg"><i style="background:var(--t2)"></i>High</span><span class="lg"><i style="background:var(--t3)"></i>Very high</span><button id="only" aria-pressed="false">Top 5 only</button></div>
+   <div class="doc" id="doc"></div>
+  </section>
+  <aside class="panel" id="panel" aria-label="Sentences needing attention"><p class="ph" id="ph"></p><div id="list"></div>
+   <p class="trust">Estimated using 5 signals · 100% local analysis</p>
+   <p class="how">Each sentence is scored 0 to 100 on five weighted signals. Names, numbers, abbreviations, headings and very short sentences are handled separately. Syllable counts, clause counts and passive-voice flags come from word patterns, not a grammar parse, so treat scores as a guide.</p></aside>
+ </div>
+</section>
+<section id="test" class="res hidden" style="overflow:auto">
+ <header class="hdr"><div class="word">Readability Lens <small style="margin-left:8px">Evaluation (developer)</small></div><button id="tback">Back</button></header>
+ <div style="max-width:1100px;width:100%;margin:0 auto;padding:4px 32px 48px">
+  <div class="tabs2" id="ttabs"><button data-t="dev" class="on">Development set</button><button data-t="held">Held-out set</button><button data-t="log">Changelog</button></div>
+  <div id="tdev">
+   <p class="tp">19 deliberately different sentences scored together as one chapter. Expected levels are the developer's own judgment (1 easy to 5 very hard). Use this set while tuning. Change any level and the comparison updates.</p>
+   <div class="sum" style="padding:0 0 10px;grid-template-columns:repeat(3,1fr)" id="tsum"></div>
+   <p class="tp" id="tdis"></p>
+   <div class="tile" style="padding:0;overflow:auto"><table class="tbl" id="ttab"></table></div>
+  </div>
+  <div id="theld" class="hidden">
+   <p class="tp">24 sentences that were never used while adjusting the scoring. Have several real readers rate each one from 1 (very easy to read) to 5 (very hard to read), then enter their ratings below. Do not change the weights using this set, or it stops being a fair test. Tool scores stay hidden until you reveal them, so they can't influence your data entry.</p>
+   <div class="acts" style="margin:0 0 12px"><button id="hsheet">Show rater sheet</button><button id="hrev">Reveal tool scores</button><button id="hclr">Clear ratings</button></div>
+   <textarea id="hsheetbox" class="hidden" readonly style="min-height:160px;border:1px solid var(--line);border-radius:10px;margin-bottom:12px;font:.9rem/1.5 var(--sans);padding:12px"></textarea>
+   <div class="sum" style="padding:0 0 10px;grid-template-columns:repeat(3,1fr)" id="hsum"></div>
+   <div class="tile" style="padding:0;overflow:auto"><table class="tbl" id="htab"></table></div>
+  </div>
+  <div id="tlog" class="hidden"><div class="tile"><p class="eb">How the scoring changed</p><ul class="lg2">
+   <li><b>v1</b> Flesch Reading Ease for the chapter, with the longest sentences listed by grade level.</li>
+   <li><b>v2</b> Five-signal model: lexical, sentence complexity, readability formulas, structure and relative difficulty. Names, numbers and abbreviations ignored in vocabulary scoring. Mostly-dialogue sentences weighted at 70%.</li>
+   <li><b>v3</b> Every eligible sentence gets the full analysis in one pass, so the Easy / Moderate / Difficult counts, the map and the top 5 agree. Removed the misleading "two-stage" wording.</li>
+   <li><b>v4</b> Names and abbreviations removed from the readability-formula signal. Top 5 requires a minimum score of 25. Short technical sentences (6+ words) can now rank.</li>
+   <li><b>Next</b> Collect human ratings on the held-out set, then tune weights only against the development set.</li></ul></div></div>
+ </div>
+</section>
+<div class="tip hidden" id="tip"></div>
+<script>
+
+
+
+const $=id=>document.getElementById(id);
+const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
+const sc=(v,lo,hi)=>clamp((v-lo)/(hi-lo)*100);
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const WRE=/[A-Za-z\u00C0-\u024F]+(?:['’-][A-Za-z\u00C0-\u024F]+)*/g;
+const TRE=/\d[\d.,%:\/-]*|[A-Za-z\u00C0-\u024F]+(?:['’-][A-Za-z\u00C0-\u024F]+)*/g;
+const STOP=new Set("a an the of in on at to for from by with without into onto over under about as is are was were be been being am do does did has have had it its he she they them his her their we you i me my our your this that these those and or but nor so yet not no if then than there here who whom whose which what when where while will would could should may might can shall must also just very said".split(" "));
+const SUB=/\b(although|though|because|while|whereas|which|who|whom|whose|whether|unless|since|until|despite|if|when|whenever|where|wherever|so that|rather than)\b/gi;
+const TECH=/(ology|ologist|ization|isation|ometr|ectomy|itis|osis|dynamic|quantum|thermo|electro|magnet|molecul|algorithm|paradigm|epistem|ontolog|jurisprud|heuristic)/;
+const PASSIVE=/\b(?:is|are|was|were|been|being|be|get|gets|got)\s+(?:\w+ly\s+)?(?!then\b|even\b|often\b|open\b)(?:\w+ed|\w+en|known|made|done|seen|given|taken|shown|written|held|kept|built|found|led|told|sold)\b/gi;
+const SAMPLE=`CHAPTER ONE
+
+The rain had not stopped for three days, and Mara had begun to think of it as a kind of tenant. It lived in the gutters. It paid no rent.
+
+"You should leave before the road floods," said Mr. Okafor, who had spent the better part of his seventy years convincing himself that the river, notwithstanding its history of unpredictable and occasionally catastrophic overflow, bore him no personal animosity.
+
+"What are you doing?" she asked. He shrugged.
+
+Mara did not answer. She was watching the lamp in the upstairs window, wondering whether the incomprehensibly elaborate arrangement of obligations, half-remembered promises, and inherited grievances that had bound her family to this valley for four generations could be reasonably described as love, or whether it was merely habit wearing the clothes of devotion.
+
+By 2026 the county survey, which had been commissioned by officials who were never shown the flood maps that were quietly redrawn, recorded 17.5% of the valley as uninhabitable, a figure that the International Organization for Standardization had once classified under hydrological contingency criteria.
+
+"I'll go in the morning," she said.
+
+He nodded. The rain kept on.
+
+The valley had always kept its secrets in the places where water gathered, and Mara, who knew every culvert and ditch by the sound it made after a storm, understood that the silence from the lower field was not a good sign. Her father used to say that a quiet river was a river deciding something.
+
+When the surveyors arrived in the spring, they measured the old stone bridge with instruments that were considerably more sophisticated than anything the village had ever owned, and they concluded, after several weeks of deliberation, that the structure was probably safe for pedestrians. Nobody believed them.
+
+The schoolteacher, a careful woman who distrusted anything she could not verify with her own eyes, climbed down the embankment every evening to look at the footings, because she had decided that if the bridge was going to fail, someone ought to be watching when it happened.
+
+"It will hold," Mara said.
+
+"Perhaps," said Mr. Okafor, "though the water has opinions of its own."
+
+The next morning the water was in the yard. Mara carried the lamp down to the cellar, then the photographs, then her mother's recipe tin. Nobody had asked her to. The neighbours stood at their doors and watched the road turn into a slow brown river.
+
+The committee's hydrological assessment, circulated in a document whose methodological appendices were understood by almost no one who relied upon its conclusions, nevertheless recommended that the lower fields be reclassified as seasonal wetland, thereby relieving the authority of its remediation obligations.
+
+"Is that legal?" she asked.
+
+"Probably," said the teacher. "That's the problem."`;
+
+function syl(w){w=w.toLowerCase().replace(/[^a-z]/g,'');if(!w)return 0;if(w.length<=3)return 1;
+ w=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,'').replace(/^y/,'');const m=w.match(/[aeiouy]{1,2}/g);return m?m.length:1}
+const sylW=x=>x.replace(/['’]/g,'').split('-').reduce((a,p)=>a+syl(p),0)||1;
+const words=s=>s.match(WRE)||[];
+
+function split(text){
+ const re=/(?:[^.!?…\n]|\.(?=\d))+(?:[.!?…]+["'”’)\]]*|(?=\n)|$)/g;
+ const abbr=/(?:\b(?:Mr|Mrs|Ms|Dr|St|Prof|Sr|Jr|vs|etc|[A-Z])|e\.g|i\.e)\.$/;
+ const out=[];let m;
+ while((m=re.exec(text))){
+  const lead=m[0].length-m[0].trimStart().length;
+  const s={start:m.index+lead,end:m.index+m[0].length};
+  const p=out[out.length-1];
+  if(p&&abbr.test(text.slice(p.start,p.end).trim())&&text.slice(p.end,s.start).indexOf('\n')<0)p.end=s.end;else out.push(s);
+ }
+ return out.filter(s=>words(text.slice(s.start,s.end)).length>0);
+}
+
+function tokenize(t,lowerSeen){
+ return [...t.matchAll(TRE)].map((m,i)=>{const x=m[0];
+  if(/^\d/.test(x))return{x,type:'num',syl:1};
+  const s=sylW(x);
+  if(/^[A-Z]{2,}s?$/.test(x))return{x,type:'abbr',syl:s};
+  if(/^[A-Z]/.test(x)&&x!=='I'&&!/^I['’]/.test(x)&&!/^(Mr|Mrs|Ms|Dr|Prof|St)$/.test(x)&&(i>0||!lowerSeen.has(x.toLowerCase())))return{x,type:'proper',syl:s};
+  return{x,type:'word',syl:s};});
+}
+const COMMON=new Set('understood understand understanding something everything everyone everybody anything anyone throughout remember remembered together different important beautiful certainly probably possible possibly sometimes whatever whenever wherever however nevertheless therefore another between through thought brought children daughter neighbour neighbours neighbors afternoon yesterday tomorrow morning evening beginning surprised surprise suddenly suddenly absolutely carefully quietly happened happening interested interesting answered question questions knowledge decided decision'.split(' '));
+function vocabWeight(w,freq){const l=w.toLowerCase();if(COMMON.has(l))return 0;if((freq[l]||1)>=3)return 0;
+ if(TECH.test(l)&&l.length>=7)return 1;
+ if(l.length>=9&&sylW(l)>=3&&!/(ing|ed|ly|s|ness|ment|ful|ers?)$/.test(l))return .5;return 0}
+
+// Quick pre-score: used for chapter-relative statistics (the 'relative difficulty' signal)
+function cheap(o){const c=o.tk.filter(t=>t.type!=='num');const n=Math.max(c.length,1);
+ const spw=c.reduce((a,t)=>a+t.syl,0)/n,l8=c.filter(t=>t.x.length>=8&&t.type==='word').length/n*100;
+ const punct=(o.t.match(/[,;:()—–]/g)||[]).length;
+ return .4*sc(o.W,8,45)+.3*sc(spw,1.2,2.2)+.15*sc(punct,0,8)+.15*sc(l8,0,40)}
+
+// Full five-signal analysis, run on every eligible sentence
+function deep(o,ctx){
+ const t=o.t,tk=o.tk,W=o.W;
+ const content=tk.filter(x=>x.type==='word'),CW=Math.max(content.length,1);
+ const spw=content.reduce((a,x)=>a+x.syl,0)/CW;
+ const complex=content.filter(x=>x.syl>=3).length,c3=complex/CW*100;
+ const l8=content.filter(x=>x.x.length>=8).length/CW*100;
+ const hardWords=content.map(x=>[x.x,vocabWeight(x.x,ctx.freq)]).filter(a=>a[1]>0);
+ const hardR=hardWords.reduce((a,b)=>a+b[1],0)/CW*100;
+ const lex=.3*sc(spw,1.2,2.2)+.3*sc(c3,0,35)+.2*sc(l8,0,40)+.2*sc(hardR,0,25);
+ const commas=(t.match(/,/g)||[]).length,semi=(t.match(/;/g)||[]).length,paren=(t.match(/\(/g)||[]).length,
+  dash=(t.match(/—|–| - /g)||[]).length,colon=(t.match(/:/g)||[]).length,subs=(t.match(SUB)||[]).length,
+  coord=(t.match(/,\s*(and|but|or|yet|so)\b/gi)||[]).length;
+ const clauses=1+subs+semi+coord+colon,punct=commas+2*semi+2*paren+dash;
+ const cx=.35*sc(W,8,45)+.25*sc(clauses,1,5)+.2*sc(punct,0,8)+.2*sc(subs,0,4);
+ const all=content.reduce((a,x)=>a+x.syl,0);
+ const flesch=206.835-1.015*W-84.6*(all/CW),fk=.39*W+11.8*(all/CW)-15.59,fog=.4*(W+100*complex/CW);
+ const rd=(sc(100-flesch,0,110)+sc(fk,0,20)+sc(fog,4,30))/3;
+ const nest=Math.max(0,subs-1)+paren+(t.match(/,\s*(which|who|whom|whose)\b[^,;]*,/gi)||[]).length;
+ const passive=(t.match(PASSIVE)||[]).length;
+ let cur=[],best=[];for(const x of tk){if(x.type==='proper'||x.type==='abbr'||x.type==='num')continue;
+  if(STOP.has(x.x.toLowerCase())||/ly$/i.test(x.x))cur=[];else{cur.push(x.x);if(cur.length>best.length)best=cur.slice()}}
+ const np=best.length;
+ const ideas=1+semi+coord+dash;
+ const st=.3*sc(nest,0,3)+.2*sc(passive,0,2)+.25*sc(np,2,6)+.25*sc(ideas,1,4);
+ const prelim=(.25*lex+.25*cx+.2*rd+.15*st)/.85;
+ const z=.5*(o.W-ctx.mW)/ctx.sW+.5*(o.cheap-ctx.mC)/ctx.sC;
+ const rel=clamp(50+20*z);
+ let score=.25*lex+.25*cx+.2*rd+.15*st+.15*rel;
+ const mult=(o.dialogue?.7:1)*Math.min(1,.45+W/20);
+ score*=mult;
+ const sig=[['Lexical',25,lex],['Sentence complexity',25,cx],['Readability formulas',20,rd],['Structure',15,st],['Relative to chapter',15,rel]];
+ return{score,sig,complex,npPhrase:best.join(' '),W,spw,c3,clauses,passive,np,nest,ideas,punct,commas,hardWords,mult,prelim,
+  names:[...new Set(tk.filter(x=>x.type==='proper'||x.type==='abbr').map(x=>x.x))].slice(0,3)};
+}
+
+function analyze(text){
+ const lowerSeen=new Set(),freq={};
+ words(text).forEach(w=>{const l=w.toLowerCase();freq[l]=(freq[l]||0)+1;if(/^[a-z]/.test(w))lowerSeen.add(l)});
+ const inQ=new Uint8Array(text.length);let open=false;
+ for(let i=0;i<text.length;i++){const c=text[i];
+  if(c==='\n'){open=false;continue}
+  if(c==='“'||(c==='"'&&!open)){open=true;inQ[i]=1}else if(c==='”'||(c==='"'&&open)){inQ[i]=1;open=false}else inQ[i]=open?1:0}
+ const skip={head:0,short:0,dialogue:0};const prose=[];
+ for(const s of split(text)){
+  const t=text.slice(s.start,s.end),tk=tokenize(t,lowerSeen);
+  const ls=text.lastIndexOf('\n',s.start-1)+1;let le=text.indexOf('\n',s.start);if(le<0)le=text.length;
+  const line=text.slice(ls,le).trim(),lw=words(line).length;
+  const head=(lw<=10&&!/[.!?…"”’)]$/.test(line))||/^([-*•–]|\d+[.)]|[a-z][.)])\s+/.test(line)||(lw<=12&&/[A-Z]/.test(line)&&line===line.toUpperCase());
+  if(head){skip.head++;continue}
+  let q=0;for(let i=s.start;i<s.end;i++)q+=inQ[i];
+  prose.push({...s,t,tk,W:tk.length,dialogue:q/(s.end-s.start)>.6});
+ }
+ const W=prose.reduce((a,o)=>a+o.W,0),S=prose.length;
+ const Y=prose.reduce((a,o)=>a+o.tk.reduce((b,x)=>b+x.syl,0),0);
+ const cplx=prose.reduce((a,o)=>a+o.tk.filter(x=>x.type==='word'&&x.syl>=3).length,0);
+ const ease=206.835-1.015*(W/S)-84.6*(Y/W),fk=.39*W/S+11.8*Y/W-15.59,fog=.4*(W/S+100*cplx/W);
+ const elig=prose.filter(o=>o.W>=6);skip.short=S-elig.length;skip.dialogue=elig.filter(o=>o.dialogue).length;
+ elig.forEach(o=>o.cheap=cheap(o));
+ const mean=a=>a.reduce((x,y)=>x+y,0)/a.length,sd=(a,m)=>Math.max(1,Math.sqrt(mean(a.map(v=>(v-m)**2))));
+ const Ws=elig.map(o=>o.W),Cs=elig.map(o=>o.cheap),mW=mean(Ws),mC=mean(Cs);
+ const ctx={freq,mW,sW:sd(Ws,mW),mC,sC:sd(Cs,mC)};
+ const sorted=Ws.slice().sort((a,b)=>a-b),med=sorted[Math.floor(sorted.length/2)]||0;
+ elig.forEach(o=>{o.d=deep(o,ctx);o.score=o.d.score});
+ prose.forEach(o=>{if(!o.d)o.score=0});
+ const top=elig.slice().sort((a,b)=>b.score-a.score).filter(o=>o.score>=25).slice(0,5);
+ return{prose,elig,top,W,S,ease,fk,fog,cplx,skip,med};
+}
+
+function band(e){
+ if(e>=90)return['Very easy','Reads like a children’s story. Check that it isn’t too thin.'];
+ if(e>=80)return['Easy','Smooth and fast. A good match for commercial fiction and thrillers.'];
+ if(e>=70)return['Fairly easy','Comfortable for most adult readers. A strong range for general fiction.'];
+ if(e>=60)return['Plain','Clear to teenagers and up. Works well for literary and upmarket fiction.'];
+ if(e>=50)return['Fairly difficult','Readers will slow down. Fine for dense scenes, tiring across a whole book.'];
+ if(e>=30)return['Difficult','Closer to academic prose. Consider splitting your longest sentences.'];
+ return['Very difficult','Most readers will struggle. Start with the highlighted sentences.'];
+}
+
+function whyList(d,o,med){
+ const l=[`${d.W} words (chapter median ${med})`,`${d.spw.toFixed(1)} syllables per word`,`${Math.round(d.c3)}% complex words (3+ syllables)`,`${d.clauses} clause${d.clauses>1?'s':''}`];
+ if(d.punct>=5)l.push(`Heavy punctuation: ${d.commas} commas and other breaks`);
+ if(d.nest>=1)l.push(`Nested or interrupting clause${d.nest>1?'s ('+d.nest+')':''}`);
+ if(d.passive)l.push(`Passive voice, ${d.passive} time${d.passive>1?'s':''}`);
+ if(d.np>=4)l.push(`Stacked noun phrase of ${d.np} words`);
+ if(d.ideas>=3)l.push(`${d.ideas} ideas joined in one sentence`);
+ if(d.hardWords.length)l.push('Uncommon terms: '+d.hardWords.slice(0,3).map(r=>r[0]).join(', '));
+ if(d.names.length)l.push('Names and abbreviations ignored in vocabulary scoring ('+d.names.join(', ')+')');
+ if(o.dialogue)l.push('Mostly dialogue, so weighted at 70%');
+ return l;
+}
+
+const TIER=s=>s>=70?3:s>=55?2:s>=35?1:0;
+const TNAME=['Low difficulty','Moderate difficulty','High difficulty','Very high difficulty'];
+const SIGLONG=['Word complexity','Sentence complexity','Readability formulas','Structural complexity','Relative to your chapter'];
+const SIGHELP=['syllables, long and technical words','length, clauses, punctuation','Flesch, Kincaid, Fog','nesting, passive, noun stacks','how far above your chapter norm'];
+const CAUSE=['complex vocabulary','long, clause-heavy construction','high readability-formula scores','tangled structure','being far denser than the rest of your chapter'];
+const rm=()=>matchMedia('(prefers-reduced-motion:reduce)').matches,smooth=()=>rm()?'auto':'smooth';
+const wide=()=>matchMedia('(min-width:1001px)').matches;
+let R=null,TEXT='',cur=null;
+
+function splitTip(t){const s=t.trim(),re=/;|,\s+(?:and|but|which|while|because|although|whereas|so|yet|though|when)\b/gi;let best=null,m;
+ while((m=re.exec(s))){const i=m.index;if(i<s.length*.25||i>s.length*.75)continue;if(!best||Math.abs(i-s.length/2)<Math.abs(best.i-s.length/2))best={i}}
+ if(!best)return null;return{before:s.slice(0,best.i).trim().slice(-44),after:s.slice(best.i+1).trim().slice(0,44)}}
+function fixes(d,o,med){const f=[];
+ if(d.W>=28){const sp=splitTip(o.t);f.push(sp?`Split it in two. End the first sentence after \u201c\u2026${esc(sp.before)}\u201d and start the next with \u201c${esc(sp.after)}\u2026\u201d.`:`Split it in two. At ${d.W} words it is far past the ${med} words typical for your chapter.`)}
+ if(d.hardWords.length)f.push('Look for simpler words than: '+d.hardWords.slice(0,3).map(r=>esc(r[0])).join(', ')+'.');
+ if(d.passive)f.push('This may be passive voice. If so, say who performs the action.');
+ if(d.nest>=2||(d.nest>=1&&d.W<28))f.push('Move the interrupting clause, the part set off by commas, dashes or brackets, into its own sentence.');
+ if(d.np>=4)f.push(`Unpack the stacked phrase \u201c${esc(d.npPhrase)}\u201d into a short clause.`);
+ if(d.ideas>=3)f.push(`Give each of its ${d.ideas} ideas its own sentence.`);
+ if(d.punct>=7)f.push('Cut some commas and asides. Each one is a pause the reader has to carry.');
+ if(!f.length)f.push('Trim qualifiers and long words. Read it aloud and shorten it wherever you run out of breath.');
+ return f.slice(0,3)}
+
+function verdict(r,nd){const sh=nd/r.S;
+ if(nd===0)return'Easy to read throughout';
+ if(sh<.08)return'Readable, with a few difficult sentences';
+ if(sh<.2)return'Mostly readable, with some difficult passages';
+ return'Demanding: difficult sentences are frequent'}
+
+function detailHTML(o,r){const d=o.d;
+ const rows=d.sig.map((s,k)=>`<div class="sr"><span>${SIGLONG[k]} <small>${s[1]}%</small></span><div class="bar" title="${SIGHELP[k]}"><b style="width:${s[2].toFixed(0)}%"></b></div><em>+${(s[1]*s[2]/100).toFixed(1)}</em></div>`).join('');
+ const raw=d.sig.reduce((a,s)=>a+s[1]*s[2]/100,0);
+ const adj=d.mult<.995?`<div class="sum2" style="border:0;margin:0;padding-top:4px"><span>Adjustment x${d.mult.toFixed(2)} ${o.dialogue?'(mostly dialogue)':'(short sentence)'}</span><span>${raw.toFixed(1)} to ${d.score.toFixed(1)}</span></div>`:'';
+ const top2=d.sig.map((s,k)=>[k,s[1]*s[2]/100]).sort((a,b)=>b[1]-a[1]).slice(0,2);
+ let why=`Mostly ${CAUSE[top2[0][0]]}, together with ${CAUSE[top2[1][0]]}.`;
+ if(d.W>=r.med*1.4)why+=` It runs ${d.W} words against a chapter median of ${r.med}.`;
+ return `<div class="detail"><h4>Why this sentence is difficult</h4>
+  <div class="sum2" style="border:0;margin:0 0 6px;padding:0"><span>Difficulty</span><b>${d.score.toFixed(1)}</b></div>${rows}${adj}
+  <p class="nt">Each signal is scored 0 to 100, weighted, and the points add up to the difficulty score.</p>
+  <h5>The numbers</h5><div class="fg"><div><b>${d.W}</b><span>words</span></div><div><b>${d.complex}</b><span>complex words</span></div><div><b>${d.clauses}</b><span>est. clauses</span></div><div><b>${d.spw.toFixed(1)}</b><span>syllables / word</span></div></div>
+  <h5>What makes it hard</h5><p>${why}</p>
+  <h5>How to fix it</h5><ul>${fixes(d,o,r.med).map(x=>`<li>${x}</li>`).join('')}</ul></div>`}
+
+function open_(n,fromMark){
+ const items=[...document.querySelectorAll('#list .item')];
+ const same=cur===n;cur=same?null:n;
+ items.forEach((it,i)=>{const on=cur===i+1;it.classList.toggle('open',on);it.querySelector('.detail').classList.toggle('hidden',!on);it.querySelector('.view').textContent=on?'Hide analysis':'View analysis'});
+ document.querySelectorAll('mark.active').forEach(m=>m.classList.remove('active'));
+ document.querySelectorAll('.mk').forEach(m=>m.classList.toggle('on',+m.dataset.n===cur));
+ if(cur){const m=document.getElementById('m'+cur);m.classList.add('active');
+  if(wide()||fromMark==='map')m.scrollIntoView({block:'center',behavior:smooth()});
+  if(fromMark==='mark'||!wide()){const it=items[cur-1];it.scrollIntoView({block:'nearest',behavior:smooth()})}}
+}
+
+function render(r,text){
+ TEXT=text;cur=null;
+ const ease=r.ease;let nE=0,nM=0,nD=0;
+ r.prose.forEach(o=>{const t=TIER(o.score);if(t>=2)nD++;else if(t===1)nM++;else nE++});
+ $('verdict').textContent=verdict(r,nD);$('eband').textContent=band(ease)[0];
+ const tgt=clamp(ease),t0=performance.now();
+ if(rm())$('ease').textContent=tgt.toFixed(1);else(function f(t){const p=Math.min(1,(t-t0)/900);$('ease').textContent=(tgt*(1-Math.pow(1-p,3))).toFixed(1);if(p<1)requestAnimationFrame(f)})(t0);
+ $('grade').textContent=Math.max(1,r.fk).toFixed(1);$('words').textContent=r.W.toLocaleString();$('sents').textContent=r.S.toLocaleString();
+ const tot=r.S,seg=[['Easy',nE,'var(--b0)'],['Moderate',nM,'var(--b1)'],['Difficult',nD,'var(--b3)']];
+ $('stack').innerHTML=seg.filter(s=>s[1]>0).map(s=>`<i style="width:${s[1]/tot*100}%;background:${s[2]}"></i>`).join('');
+ $('dl').innerHTML=seg.map(s=>`<div><i style="background:${s[2]}"></i><span>${s[0]}</span><span><b>${s[1]}</b> sentence${s[1]===1?'':'s'}</span></div>`).join('');
+ const rank=new Map(r.top.map((o,i)=>[o.start,i+1]));
+ $('map').innerHTML=r.prose.map((o,i)=>`<i data-i="${i}" class="k${TIER(o.score)}" style="height:${Math.max(7,o.score)}%"></i>`).join('');
+ $('mks').innerHTML=r.top.map((o,i)=>`<button class="mk" data-n="${i+1}" aria-label="Sentence ${i+1}" title="Sentence ${r.prose.indexOf(o)+1} \u00b7 Difficulty ${o.score.toFixed(1)}" style="left:${((r.prose.indexOf(o)+.5)/r.prose.length*100).toFixed(2)}%">${i+1}</button>`).join('');
+ 
+ $('doc').className='doc';$('only').setAttribute('aria-pressed','false');
+ let html='',pos=0;
+ r.prose.forEach((o,i)=>{const n=rank.get(o.start),t=TIER(o.score);
+  html+=esc(text.slice(pos,o.start))+`<mark id="${n?'m'+n:'s'+i}" class="${t?'t'+t:''}${n?' top':''}"${n?` data-n="${n}" tabindex="0"`:''}>`+esc(text.slice(o.start,o.end))+'</mark>';pos=o.end});
+ $('doc').innerHTML=html+esc(text.slice(pos));
+ $('ph').textContent=r.top.length===0?'No sentences need attention':r.top.length===5?'5 sentences needing the most attention':`${r.top.length} sentence${r.top.length===1?'':'s'} worth a closer look`;
+ $('list').innerHTML=!r.top.length?'<div class="item" style="cursor:default"><p class="quote" style="display:block">No sentence in this chapter scored above 25 out of 100. It reads smoothly throughout.</p></div>':r.top.map((o,i)=>{const d=o.d,t=TIER(d.score),q=o.t.trim();
+  return `<article class="item" data-n="${i+1}"><div class="ih"><span class="rk">0${i+1}</span><span class="sc">${d.score.toFixed(1)}</span><span class="tier k${t}">${t?TNAME[t]:'Mild difficulty'}</span></div><div class="ibar"><b style="width:${Math.max(4,d.score).toFixed(0)}%;background:var(--b${t})"></b></div>
+  <p class="quote">\u201c${esc(q)}\u201d</p><p class="facts">${d.W} words \u00b7 ${d.clauses} est. clauses \u00b7 ${d.spw.toFixed(1)} syllables/word</p>
+  <button class="view">View analysis</button>${detailHTML(o,r).replace('class="detail"','class="detail hidden"')}</article>`}).join('');
+ $('land').classList.add('hidden');$('res').classList.remove('hidden');
+ $('reader').scrollTop=0;$('panel').scrollTop=0;window.scrollTo(0,0);
+}
+
+function run(text){
+ text=text??$('in').value;$('err').textContent='';
+ if(words(text).length<40){$('err').textContent='Paste at least 40 words so the analysis means something.';return}
+ const r=analyze(text);
+ if(!r.elig.length){$('err').textContent='Not enough full sentences found. Paste prose rather than a list.';return}
+ R=r;render(r,text);
+}
+const upd=()=>{$('count').textContent=words($('in').value).length.toLocaleString()+' words'};
+$('in').addEventListener('input',upd);
+$('run').onclick=()=>run();
+$('ex').onclick=()=>{$('in').value=SAMPLE;upd();run(SAMPLE)};
+$('back').onclick=()=>{$('res').classList.add('hidden');$('land').classList.remove('hidden');window.scrollTo(0,0)};
+$('only').onclick=e=>{const b=e.currentTarget,on=b.getAttribute('aria-pressed')==='true';b.setAttribute('aria-pressed',String(!on));$('doc').classList.toggle('only',!on)};
+$('list').addEventListener('click',e=>{const it=e.target.closest('.item');if(!it||e.target.closest('.detail'))return;open_(+it.dataset.n)});
+$('doc').addEventListener('click',e=>{const m=e.target.closest('mark.top');if(m)open_(+m.dataset.n,'mark')});
+$('doc').addEventListener('keydown',e=>{const m=e.target.closest('mark.top');if(m&&(e.key==='Enter'||e.key===' ')){e.preventDefault();open_(+m.dataset.n,'mark')}});
+$('mks').addEventListener('click',e=>{const b=e.target.closest('.mk');if(b)open_(+b.dataset.n,'map')});
+const ACC=[[1, "The dog ran across the yard and jumped on the old red chair."], [1, "It was late, and the street was quiet."], [1, "The magnificent old house stood at the end of the road."], [2, "She went to the shop and then she went to the park and then she went home and had some tea and read a book before bed."], [2, "\"I think we should go to the shop and get some bread and milk if the weather is nice,\" she said."], [2, "Bartholomew Wolfeschlegelsteinhausen met Maximilian Featherstonehaugh in Llanfairpwllgwyngyll on Tuesday."], [2, "In 2026 the figure rose to 17.5% from 12.3%, up 5.2 points since 2019."], [2, "The NASA team and the ESA team met at the UN building on Monday to share data."], [2, "He bought eggs, milk, bread, jam, butter, rice, beans, salt, sugar, and tea; she bought none."], [2, "When the rain finally stopped, the children ran outside to play in the puddles that had formed along the road."], [3, "The committee decided that the proposal would be reviewed again after the budget had been approved."], [3, "The report was written by the team and was reviewed by the board before it was approved by the director."], [3, "Although the results were encouraging, the researchers cautioned that further studies would be needed before any conclusions could be drawn."], [4, "Quantum chromodynamics governs hadronic color confinement."], [4, "The man, who had been told by a woman whom he distrusted, because she had lied, although only once, that the bridge, which was old, would hold, crossed it anyway."], [4, "The enzyme catalyzes the hydrolysis of phosphodiester bonds, thereby releasing nucleotides that are subsequently incorporated into newly synthesized strands."], [4, "Mara did not answer; she was watching the lamp in the upstairs window, wondering whether the elaborate arrangement of obligations and inherited grievances that bound her family to this valley could be described as love, or merely habit."], [5, "The implementation of the aforementioned methodological considerations was predicated upon the institutionalization of epistemological frameworks that problematize conventional ontological assumptions."], [5, "Notwithstanding anything to the contrary herein, the indemnifying party shall, to the extent permitted by applicable law, hold harmless the indemnified party from any liabilities arising therefrom."]];
+let LV=ACC.map(a=>a[0]),TR=null;
+function ranks(a){const idx=a.map((v,i)=>[v,i]).sort((x,y)=>y[0]-x[0]),rk=[];let i=0;while(i<idx.length){let j=i;while(j+1<idx.length&&idx[j+1][0]===idx[i][0])j++;for(let k=i;k<=j;k++)rk[idx[k][1]]=(i+j)/2+1;i=j+1}return rk}
+function renderTest(){
+ if(!TR)TR=analyze(ACC.map(a=>a[1]).join('\n\n'));
+ const rows=ACC.map((a,i)=>{const o=TR.prose.find(p=>p.t.trim()===a[1].trim());return{i,t:a[1],score:o?o.score:0}});
+ const re=ranks(LV),rt=ranks(rows.map(r=>r.score)),n=rows.length,m=a=>a.reduce((x,y)=>x+y,0)/a.length,ma=m(re),mb=m(rt);
+ let c=0,sa=0,sb=0;for(let i=0;i<n;i++){c+=(re[i]-ma)*(rt[i]-mb);sa+=(re[i]-ma)**2;sb+=(rt[i]-mb)**2}
+ const rho=sa&&sb?c/Math.sqrt(sa*sb):0;
+ const hard=new Set(LV.map((v,i)=>v>=4?i:-1).filter(i=>i>=0));
+ const top=TR.top.map(o=>ACC.findIndex(a=>a[1].trim()===o.t.trim())).filter(i=>i>=0);
+ const hit=top.filter(i=>hard.has(i)).length;
+ const close=rows.filter((r,i)=>Math.abs(re[i]-rt[i])<=3).length;
+ $('tsum').innerHTML=`<div class="tile"><p class="eb">Rank agreement (Spearman)</p><div class="big"><b>${rho.toFixed(2)}</b><span>1.00 is a perfect match</span></div></div>
+  <div class="tile"><p class="eb">Tool's top ${top.length} that you rated 4 or 5</p><div class="big"><b>${hit} of ${top.length}</b></div></div>
+  <div class="tile"><p class="eb">Sentences within 3 rank places</p><div class="big"><b>${close} of ${n}</b></div></div>`;
+ const gaps=rows.map((r,i)=>[i+1,Math.abs(re[i]-rt[i])]).sort((a,b)=>b[1]-a[1]).slice(0,3);
+ $('tdis').textContent='Largest disagreements: '+gaps.map(g=>'#'+g[0]+' (off by '+Math.round(g[1])+')').join(', ');
+ $('ttab').innerHTML='<tr><th>#</th><th>Sentence</th><th>Expected level</th><th>Tool score</th><th>Tool rank</th><th>Expected rank</th><th>Match</th></tr>'+rows.map((r,i)=>{const d=Math.abs(re[i]-rt[i]);
+  return `<tr><td>${i+1}</td><td class="s">${esc(r.t)}</td><td><select data-i="${i}">${[1,2,3,4,5].map(v=>`<option${LV[i]===v?' selected':''}>${v}</option>`).join('')}</select></td><td>${r.score.toFixed(1)}</td><td>${rt[i]}</td><td>${re[i]}</td><td class="${d<=3?'ok':'off'}">${d<=3?'Match':'Off by '+Math.round(d)}</td></tr>`}).join('');
+}
+function openTest(){$('land').classList.add('hidden');$('res').classList.add('hidden');$('test').classList.remove('hidden');tab('dev');window.scrollTo(0,0)}
+$('devtest').onclick=e=>{e.preventDefault();openTest()};
+if(/(^|[?&#])(mode=)?dev\b/.test(location.search+location.hash))$('devtest').parentElement.classList.remove('hidden');
+document.addEventListener('keydown',e=>{if(e.altKey&&e.shiftKey&&e.code==='KeyD'){e.preventDefault();openTest()}});
+const HO=["The children waited by the gate until the bus finally arrived.", "Pharmacokinetic variability complicates the extrapolation of dosage recommendations across heterogeneous patient populations.", "\"Where on earth did you put the keys that I left on the kitchen table?\"", "Because the committee, which had met only twice, failed to reach a quorum, the decision, though widely anticipated, was deferred until the autumn session.", "Priya Raghunathan-Westbrook flew from Chattanooga to Ulaanbaatar on the fourth of March.", "The soup was hot, so we waited a little before we ate it.", "The defendant's contention that the contract was voidable for misrepresentation was rejected on the ground that reliance had not been established.", "She laughed so hard that tea came out of her nose, and then everyone else started laughing too.", "Photosynthetic efficiency declines under prolonged thermal stress as chloroplast membranes lose structural integrity.", "In 2019 the company reported revenue of $4.2 billion, a 12% increase over the previous year.", "It is widely acknowledged among scholars that the historiography of the period has been shaped less by archival discoveries than by shifting ideological commitments.", "The old man sat on the porch and watched the sun go down behind the hills.", "Please remember to bring your passport, your ticket, and a warm coat, because the evenings are cold.", "Neoliberal restructuring reconfigured municipal governance, displacing redistributive commitments with market-oriented performance metrics.", "\"I don't know what you mean,\" Elena said quietly, \"but I do know that I'm not going back there tonight.\"", "After the meeting, which ran long because of a dispute over the agenda, we went to lunch.", "The algorithm iteratively minimizes a regularized loss function using stochastic gradient descent with momentum.", "My brother lives in Edinburgh with his wife and their two small dogs.", "Having been informed that the shipment, which had been delayed by customs, would arrive late, the manager, who was already frustrated, cancelled the order.", "The lighthouse keeper had not spoken to another person in nearly three weeks, and he found that the silence had begun to feel like company.", "Mitochondrial dysfunction is implicated in numerous neurodegenerative disorders, although causal mechanisms remain contested.", "We drove through the night and reached the coast just as the morning light touched the water.", "The provisions hereof shall be construed in accordance with the laws of the jurisdiction in which the premises are situated, without regard to conflict-of-laws principles.", "The cat slept on the warm windowsill all afternoon."];
+let RAT=HO.map(()=>[null,null,null,null,null]),REV=false,HR=null;
+try{const s=localStorage.getItem('rl_rat');if(s){const v=JSON.parse(s);if(Array.isArray(v)&&v.length===HO.length)RAT=v}}catch(e){}
+const saveRat=()=>{try{localStorage.setItem('rl_rat',JSON.stringify(RAT))}catch(e){}};
+function tab(t){['dev','held','log'].forEach(k=>$('t'+k).classList.toggle('hidden',k!==t));
+ document.querySelectorAll('#ttabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+ if(t==='dev')renderTest();if(t==='held')renderHeld()}
+$('ttabs').addEventListener('click',e=>{const b=e.target.closest('button');if(b)tab(b.dataset.t)});
+const avgOf=r=>{const v=r.filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b,0)/v.length:null};
+function heldScores(){if(!HR)HR=analyze(HO.join('\n\n'));return HO.map(s=>{const o=HR.prose.find(p=>p.t.trim()===s.trim());return o?o.score:null})}
+function renderHeld(){
+ $('htab').innerHTML='<tr><th>#</th><th>Sentence</th><th colspan="5">Reader ratings (1 to 5)</th><th>Average</th><th>Tool score</th></tr>'+HO.map((s,i)=>`<tr><td>${i+1}</td><td class="s">${esc(s)}</td>${[0,1,2,3,4].map(k=>`<td><input type="number" min="1" max="5" step="1" data-i="${i}" data-k="${k}" value="${RAT[i][k]??''}" aria-label="Rater ${k+1}, sentence ${i+1}"></td>`).join('')}<td class="av" data-i="${i}"></td><td class="ts" data-i="${i}"></td></tr>`).join('');
+ $('hrev').textContent=REV?'Hide tool scores':'Reveal tool scores';updateHeld()}
+function updateHeld(){
+ const sc=REV?heldScores():null,avg=RAT.map(avgOf);
+ document.querySelectorAll('#htab .av').forEach(c=>{const v=avg[+c.dataset.i];c.textContent=v==null?'':v.toFixed(2)});
+ document.querySelectorAll('#htab .ts').forEach(c=>{const v=sc&&sc[+c.dataset.i];c.textContent=sc?(v==null?'n/a':v.toFixed(1)):'hidden'});
+ const rated=avg.map((v,i)=>v==null||(sc&&sc[i]==null)?-1:i).filter(i=>i>=0),raters=[0,1,2,3,4].filter(k=>RAT.some(r=>r[k]!=null)).length;
+ let html=`<div class="tile"><p class="eb">Rated sentences</p><div class="big"><b>${avg.filter(v=>v!=null).length} of ${HO.length}</b><span>${raters} rater${raters===1?'':'s'}</span></div></div>`;
+ if(!REV)html+=`<div class="tile" style="grid-column:span 2"><p class="eb">Results hidden</p><p style="margin:0;color:var(--muted);font-size:.9rem">Finish entering ratings, then reveal the tool's scores to see how well they agree.</p></div>`;
+ else if(rated.length<8)html+=`<div class="tile" style="grid-column:span 2"><p class="eb">Not enough ratings yet</p><p style="margin:0;color:var(--muted);font-size:.9rem">Rate at least 8 sentences to compute agreement.</p></div>`;
+ else{const re=ranks(rated.map(i=>avg[i])),rt=ranks(rated.map(i=>sc[i])),n=rated.length,m=a=>a.reduce((x,y)=>x+y,0)/a.length,ma=m(re),mb=m(rt);
+  let c=0,sa=0,sb=0;for(let i=0;i<n;i++){c+=(re[i]-ma)*(rt[i]-mb);sa+=(re[i]-ma)**2;sb+=(rt[i]-mb)**2}
+  const rho=sa&&sb?c/Math.sqrt(sa*sb):0,k=Math.min(5,n),th=new Set(rated.slice().sort((a,b)=>avg[b]-avg[a]).slice(0,k)),tt=rated.slice().sort((a,b)=>sc[b]-sc[a]).slice(0,k);
+  html+=`<div class="tile"><p class="eb">Human agreement (Spearman)</p><div class="big"><b>${rho.toFixed(2)}</b><span>vs average rating</span></div></div><div class="tile"><p class="eb">Top-${k} recall</p><div class="big"><b>${tt.filter(i=>th.has(i)).length} of ${k}</b></div></div>`}
+ $('hsum').innerHTML=html}
+$('htab').addEventListener('change',e=>{const el=e.target.closest('input');if(!el)return;let v=el.value===''?null:Math.round(+el.value);if(v!=null&&(v<1||v>5))v=null;el.value=v??'';RAT[+el.dataset.i][+el.dataset.k]=v;saveRat();updateHeld()});
+$('hrev').onclick=()=>{REV=!REV;renderHeld()};
+$('hclr').onclick=()=>{if(confirm('Clear all ratings?')){RAT=HO.map(()=>[null,null,null,null,null]);saveRat();renderHeld()}};
+$('hsheet').onclick=()=>{const b=$('hsheetbox');b.value='Rate how hard each sentence is to read, from 1 (very easy) to 5 (very hard). Judge reading difficulty, not whether you agree with it or like it.\n\n'+HO.map((s,i)=>(i+1)+'. '+s).join('\n\n');b.classList.toggle('hidden');if(!b.classList.contains('hidden')){b.select();try{navigator.clipboard.writeText(b.value)}catch(e){}}};
+$('tback').onclick=()=>{$('test').classList.add('hidden');$('land').classList.remove('hidden')};
+$('ttab').addEventListener('change',e=>{const s=e.target.closest('select');if(s){LV[+s.dataset.i]=+s.value;renderTest()}});
+const tip=$('tip');
+$('map').addEventListener('mousemove',e=>{const i=e.target.closest('i');if(!i||!R){tip.classList.add('hidden');return}const k=+i.dataset.i;tip.textContent='Sentence '+(k+1)+' \u00b7 Difficulty '+R.prose[k].score.toFixed(1);tip.classList.remove('hidden');tip.style.left=e.clientX+'px';tip.style.top=(e.clientY-36)+'px'});
+$('map').addEventListener('mouseleave',()=>tip.classList.add('hidden'));
+$('map').addEventListener('click',e=>{const i=e.target.closest('i');if(!i)return;const o=R.prose[+i.dataset.i],n=R.top.indexOf(o)+1;
+ if(n){open_(n,'map')}else{const m=document.getElementById('s'+i.dataset.i);m.scrollIntoView({block:'center',behavior:smooth()});m.classList.add('active');setTimeout(()=>m.classList.remove('active'),1400)}});
+</script>
+</body>
+</html>
